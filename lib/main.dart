@@ -68,9 +68,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final _textController = TextEditingController();
   final List<ChatMessage> _messages = [];
   final FocusNode _focusNode = FocusNode();
+  bool _isComposing = false;
 
   void _handleSubmitted(String text) {
     _textController.clear();
+    setState(() {
+      _isComposing = false;
+    });
     ChatMessage message = ChatMessage(
       text: text,
       animationController: AnimationController(
@@ -95,7 +99,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             Flexible(
               child: TextField(
                 controller: _textController,
-                onSubmitted: _handleSubmitted,
+                onChanged: (String text) {
+                  setState(() {
+                    _isComposing = text.length > 0;
+                  });
+                },
+                onSubmitted: _isComposing ? _handleSubmitted : null,
                 decoration:
                     InputDecoration.collapsed(hintText: 'Send a message'),
                 focusNode: _focusNode,
@@ -105,7 +114,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               margin: EdgeInsets.symmetric(horizontal: 4.0),
               child: IconButton(
                 icon: Icon(Icons.send),
-                onPressed: () => _handleSubmitted(_textController.text),
+                onPressed: _isComposing
+                    ? () => _handleSubmitted(_textController.text)
+                    : null,
                 color: Colors.blue,
               ),
             )
@@ -142,8 +153,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
     );
   }
-  dispose(){
-    for (ChatMessage message in _messages){
+
+  dispose() {
+    for (ChatMessage message in _messages) {
       message.animationController.dispose();
     }
     super.dispose();
